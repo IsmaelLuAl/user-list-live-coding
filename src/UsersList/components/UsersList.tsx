@@ -2,7 +2,7 @@ import { type User } from '../../types'
 
 interface Props {
   users: User[]
-  showColors: boolean,
+  showColors: boolean
   deleteUser: (uuid: string) => void
 }
 
@@ -34,7 +34,7 @@ export const UsersList = ({ users, showColors, deleteUser }: Props) => {
                 <td>{user.name.last}</td>
                 <td>{user.location.country}</td>
                 <td>
-                  <button onClick={() => deleteUser(user.login.uuid)}>Borrar</button>
+                  <button onClick={() => { deleteUser(user.login.uuid) }}>Borrar</button>
                 </td>
               </tr>
             )
