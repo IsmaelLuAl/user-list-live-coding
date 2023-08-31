@@ -35,6 +35,11 @@ const App = () => {
     })
     : users
 
+  const handleDelete = (uuid: string) => {
+    const filteresUsers = users.filter((user) => user.login.uuid !== uuid)
+    setusers(filteresUsers)
+  }
+
   return (
     <>
       <div className='app'>
@@ -48,7 +53,7 @@ const App = () => {
           </button>
         </header>
         <main>
-          <UsersList users={sortedUsers} showColors={showColors} />
+          <UsersList users={sortedUsers} showColors={showColors} deleteUser={handleDelete} />
         </main>
       </div >
     </>
