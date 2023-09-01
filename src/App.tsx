@@ -1,20 +1,18 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
 import './App.css'
-import { type User } from './types'
+import { SortBy, type User } from './types.d'
 import { UsersList } from './UsersList/components/UsersList'
 
 const App = () => {
   const [users, setusers] = useState<User[]>([])
   const [showColors, setshowColors] = useState(false)
-  const [sortByCountry, setsortByCountry] = useState(false)
+  const [sorting, setSorting] = useState<SortBy>(SortBy.NONE)
   const [filterCountry, setfilterCountry] = useState<string | null>(null)
 
   // useRef es para guardar un valor que queremos que se comparta entre renderizados pero que al cambiar no vuelva a renderizar el componente
   const originalUsers = useRef<User[]>([])
 
   const filteredUsers = useMemo(() => {
-    console.log('filteredUsers')
-
     return typeof filterCountry === 'string' && filterCountry.length > 0
       ? users.filter((user) => {
         return user.location.country.toLocaleLowerCase().includes(filterCountry.toLowerCase())
@@ -23,21 +21,27 @@ const App = () => {
   }, [users, filterCountry])
 
   const sortedUsers = useMemo(() => {
-    console.log('sortedUsers')
+    if (sorting === SortBy.NONE) return filteredUsers
 
-    return sortByCountry
-      // .toSorted es un metodo nuevo de javascript que aun no esta disponible en todos los navegadores
-      // Es un metodo que ya indica que queremos hacer una copia del estado
-      ? filteredUsers.toSorted((a, b) => a.location.country.localeCompare(b.location.country))
-      : filteredUsers
-  }, [filteredUsers, sortByCountry])
+    const compareProperties: Record<string, (user: User) => any> = {
+      [SortBy.NAME]: user => user.name.first,
+      [SortBy.LAST]: user => user.name.last,
+      [SortBy.COUNTRY]: user => user.location.country
+    }
+
+    return filteredUsers.toSorted((a, b) => {
+      const extractProperty = compareProperties[sorting]
+      return extractProperty(a).localeCompare(extractProperty(b))
+    })
+  }, [filteredUsers, sorting])
 
   const toogleColors = () => {
     setshowColors(!showColors)
   }
 
   const toogleSortByCountry = () => {
-    setsortByCountry(prevState => !prevState)
+    const newSortingValue = sorting === SortBy.NONE ? SortBy.COUNTRY : SortBy.NONE
+    setSorting(newSortingValue)
   }
 
   const handleDelete = (uuid: string) => {
@@ -47,6 +51,10 @@ const App = () => {
 
   const handleReset = () => {
     setusers(originalUsers.current)
+  }
+
+  const handleChangeSorting = (sort: SortBy) => {
+    setSorting(sort)
   }
 
   // Call API and get the list of users
@@ -66,13 +74,13 @@ const App = () => {
     <>
       <div className='app'>
         <h1>Prueba Técnica</h1>
-        <header style={{ display: 'flex', justifyContent: 'space-evenly' }}>
+        <header className='headerApp'>
           <button onClick={toogleColors}>
             Colorear Filas
           </button>
 
           <button onClick={toogleSortByCountry}>
-            {sortByCountry ? 'No ordenar por país' : 'Ordenar por país'}
+            {sorting === SortBy.COUNTRY ? 'No ordenar por país' : 'Ordenar por país'}
           </button>
 
           <button onClick={handleReset}>
@@ -84,7 +92,7 @@ const App = () => {
           }} />
         </header>
         <main>
-          <UsersList users={sortedUsers} showColors={showColors} deleteUser={handleDelete} />
+          <UsersList changeSorting={handleChangeSorting} users={sortedUsers} showColors={showColors} deleteUser={handleDelete} />
         </main>
       </div >
     </>
