@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import './App.css'
 import { type User } from './types'
 import { UsersList } from './UsersList/components/UsersList'
@@ -12,19 +12,25 @@ const App = () => {
   // useRef es para guardar un valor que queremos que se comparta entre renderizados pero que al cambiar no vuelva a renderizar el componente
   const originalUsers = useRef<User[]>([])
 
-  const filteredUsers = typeof filterCountry === 'string' && filterCountry.length > 0
-    ? users.filter((user) => {
-      return user.location.country.toLocaleLowerCase().includes(filterCountry.toLowerCase())
-    })
-    : users
+  const filteredUsers = useMemo(() => {
+    console.log('filteredUsers')
 
-  const sortedUsers = sortByCountry
-    // .toSorted es un metodo nuevo de javascript que aun no esta disponible en todos los navegadores
-    // Es un metodo que ya indica que queremos hacer una copia del estado
-    ? filteredUsers.toSorted((a, b) => {
-      return a.location.country.localeCompare(b.location.country)
-    })
-    : filteredUsers
+    return typeof filterCountry === 'string' && filterCountry.length > 0
+      ? users.filter((user) => {
+        return user.location.country.toLocaleLowerCase().includes(filterCountry.toLowerCase())
+      })
+      : users
+  }, [users, filterCountry])
+
+  const sortedUsers = useMemo(() => {
+    console.log('sortedUsers')
+
+    return sortByCountry
+      // .toSorted es un metodo nuevo de javascript que aun no esta disponible en todos los navegadores
+      // Es un metodo que ya indica que queremos hacer una copia del estado
+      ? filteredUsers.toSorted((a, b) => a.location.country.localeCompare(b.location.country))
+      : filteredUsers
+  }, [filteredUsers, sortByCountry])
 
   const toogleColors = () => {
     setshowColors(!showColors)
@@ -42,6 +48,8 @@ const App = () => {
   const handleReset = () => {
     setusers(originalUsers.current)
   }
+
+  // Call API and get the list of users
   useEffect(() => {
     fetch('https://randomuser.me/api/?results=100')
       .then(async res => await res.json())
